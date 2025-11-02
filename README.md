@@ -10,6 +10,20 @@
 This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
 Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
 
+<!-- Added version and admin info -->
+**Version: 2.0** - Updated with fixed admin system and improved booking
+
+## Admin Access
+- URL: `/admin`
+- Password: `0999`
+- Admin link is hidden from navigation for security
+
+## Features
+- Booking system with service selection and validation
+- Phone validation (8 digits, starts with 4 or 9)
+- Responsive design with white background and orange/black accents
+- Hidden admin dashboard
+
 ## Deployment
 
 Your project is live at:
