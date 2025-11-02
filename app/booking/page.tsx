@@ -7,12 +7,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Calendar } from "@/components/ui/calendar"
-import { Check } from "lucide-react"
+import { Check, AlertCircle } from "lucide-react"
 import { nb } from "date-fns/locale"
 
 type BookingStep = "service" | "datetime" | "info" | "confirmation"
 
 interface BookingData {
+  serviceId: string
   service: string
   servicePrice: string
   date: Date | undefined
@@ -25,6 +26,7 @@ interface BookingData {
 export default function BookingPage() {
   const [step, setStep] = useState<BookingStep>("service")
   const [bookingData, setBookingData] = useState<BookingData>({
+    serviceId: "",
     service: "",
     servicePrice: "",
     date: undefined,
@@ -33,6 +35,8 @@ export default function BookingPage() {
     email: "",
     phone: "",
   })
+  const [phoneError, setPhoneError] = useState("")
+  const [emailError, setEmailError] = useState("")
 
   const services = [
     { id: "herreklipp", name: "Herreklipp", price: "399 kr", duration: "30 min" },
@@ -67,12 +71,50 @@ export default function BookingPage() {
   const handleServiceSelect = (serviceId: string) => {
     const service = services.find((s) => s.id === serviceId)
     if (service) {
-      setBookingData({ ...bookingData, service: service.name, servicePrice: service.price })
+      setBookingData({
+        ...bookingData,
+        serviceId: service.id,
+        service: service.name,
+        servicePrice: service.price,
+      })
     }
   }
 
-  const handleSubmit = () => {
-    // Store booking in localStorage (since no database integration)
+  const validatePhone = (phone: string): boolean => {
+    const phoneRegex = /^\d{8}$/
+    const cleanPhone = phone.replace(/\s+/g, "")
+    return phoneRegex.test(cleanPhone)
+  }
+
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
+  const handlePhoneChange = (value: string) => {
+    setBookingData({ ...bookingData, phone: value })
+    const cleanPhone = value.replace(/\s+/g, "")
+    if (value && !validatePhone(cleanPhone)) {
+      setPhoneError("Telefonnummer må være 8 siffer")
+    } else {
+      setPhoneError("")
+    }
+  }
+
+  const handleEmailChange = (value: string) => {
+    setBookingData({ ...bookingData, email: value })
+    if (value && !validateEmail(value)) {
+      setEmailError("Vennligst skriv inn en gyldig e-postadresse")
+    } else {
+      setEmailError("")
+    }
+  }
+
+  const handleFinalSubmit = () => {
+    if (!canSubmit) {
+      return
+    }
+
     const bookings = JSON.parse(localStorage.getItem("bookings") || "[]")
     const newBooking = {
       id: Date.now().toString(),
@@ -85,9 +127,16 @@ export default function BookingPage() {
     setStep("confirmation")
   }
 
-  const canProceedToDateTime = bookingData.service !== ""
+  const canProceedToDateTime = bookingData.serviceId !== ""
   const canProceedToInfo = bookingData.date && bookingData.time !== ""
-  const canSubmit = bookingData.name && bookingData.email && bookingData.phone
+  const canSubmit =
+    bookingData.name &&
+    bookingData.email &&
+    bookingData.phone &&
+    !phoneError &&
+    !emailError &&
+    validatePhone(bookingData.phone.replace(/\s+/g, "")) &&
+    validateEmail(bookingData.email)
 
   return (
     <main className="min-h-screen py-20">
@@ -97,7 +146,6 @@ export default function BookingPage() {
           <p className="text-muted-foreground">Følg stegene for å booke din time hos CutzByBigA</p>
         </div>
 
-        {/* Progress Steps */}
         <div className="mb-8 flex items-center justify-center gap-2">
           <div
             className={`flex h-10 w-10 items-center justify-center rounded-full ${
@@ -110,7 +158,7 @@ export default function BookingPage() {
           >
             {step !== "service" ? <Check className="h-5 w-5" /> : "1"}
           </div>
-          <div className={`h-1 w-16 ${step !== "service" ? "bg-primary" : "bg-muted"}`} />
+          <div className={`h-1 w-12 ${step !== "service" ? "bg-primary" : "bg-muted"}`} />
           <div
             className={`flex h-10 w-10 items-center justify-center rounded-full ${
               step === "datetime"
@@ -122,7 +170,7 @@ export default function BookingPage() {
           >
             {step === "info" || step === "confirmation" ? <Check className="h-5 w-5" /> : "2"}
           </div>
-          <div className={`h-1 w-16 ${step === "info" || step === "confirmation" ? "bg-primary" : "bg-muted"}`} />
+          <div className={`h-1 w-12 ${step === "info" || step === "confirmation" ? "bg-primary" : "bg-muted"}`} />
           <div
             className={`flex h-10 w-10 items-center justify-center rounded-full ${
               step === "info"
@@ -136,7 +184,6 @@ export default function BookingPage() {
           </div>
         </div>
 
-        {/* Step 1: Select Service */}
         {step === "service" && (
           <Card>
             <CardHeader>
@@ -144,12 +191,17 @@ export default function BookingPage() {
               <CardDescription>Hvilken tjeneste ønsker du å booke?</CardDescription>
             </CardHeader>
             <CardContent>
-              <RadioGroup value={bookingData.service} onValueChange={handleServiceSelect}>
+              <RadioGroup value={bookingData.serviceId} onValueChange={handleServiceSelect}>
                 <div className="space-y-3">
                   {services.map((service) => (
                     <div
                       key={service.id}
-                      className="flex items-center space-x-3 rounded-lg border-2 p-4 transition-colors hover:border-accent"
+                      className={`flex items-center space-x-3 rounded-lg border-2 p-4 transition-all cursor-pointer ${
+                        bookingData.serviceId === service.id
+                          ? "border-accent bg-accent/10 shadow-md"
+                          : "border-border hover:border-accent/50"
+                      }`}
+                      onClick={() => handleServiceSelect(service.id)}
                     >
                       <RadioGroupItem value={service.id} id={service.id} />
                       <Label htmlFor={service.id} className="flex flex-1 cursor-pointer items-center justify-between">
@@ -159,6 +211,7 @@ export default function BookingPage() {
                         </div>
                         <div className="text-lg font-bold">{service.price}</div>
                       </Label>
+                      {bookingData.serviceId === service.id && <Check className="h-5 w-5 text-accent" />}
                     </div>
                   ))}
                 </div>
@@ -176,7 +229,6 @@ export default function BookingPage() {
           </Card>
         )}
 
-        {/* Step 2: Select Date & Time */}
         {step === "datetime" && (
           <Card>
             <CardHeader>
@@ -230,7 +282,6 @@ export default function BookingPage() {
           </Card>
         )}
 
-        {/* Step 3: Contact Information */}
         {step === "info" && (
           <Card>
             <CardHeader>
@@ -254,19 +305,35 @@ export default function BookingPage() {
                     id="email"
                     type="email"
                     value={bookingData.email}
-                    onChange={(e) => setBookingData({ ...bookingData, email: e.target.value })}
+                    onChange={(e) => handleEmailChange(e.target.value)}
                     placeholder="ola@example.com"
+                    className={emailError ? "border-red-500" : ""}
                   />
+                  {emailError && (
+                    <div className="mt-1 flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>{emailError}</span>
+                    </div>
+                  )}
                 </div>
                 <div>
-                  <Label htmlFor="phone">Telefon</Label>
+                  <Label htmlFor="phone">Telefon (8 siffer)</Label>
                   <Input
                     id="phone"
                     type="tel"
                     value={bookingData.phone}
-                    onChange={(e) => setBookingData({ ...bookingData, phone: e.target.value })}
-                    placeholder="+47 123 45 678"
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    placeholder="98765432"
+                    maxLength={8}
+                    className={phoneError ? "border-red-500" : ""}
                   />
+                  {phoneError && (
+                    <div className="mt-1 flex items-center gap-1 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>{phoneError}</span>
+                    </div>
+                  )}
+                  <p className="mt-1 text-xs text-muted-foreground">Norsk telefonnummer med 8 siffer</p>
                 </div>
 
                 <div className="rounded-lg bg-muted p-4">
@@ -293,7 +360,7 @@ export default function BookingPage() {
                   Tilbake
                 </Button>
                 <Button
-                  onClick={handleSubmit}
+                  onClick={handleFinalSubmit}
                   disabled={!canSubmit}
                   className="bg-accent text-accent-foreground hover:bg-accent/90"
                 >
@@ -304,7 +371,6 @@ export default function BookingPage() {
           </Card>
         )}
 
-        {/* Step 4: Confirmation */}
         {step === "confirmation" && (
           <Card>
             <CardContent className="p-12 text-center">
@@ -340,6 +406,7 @@ export default function BookingPage() {
                 onClick={() => {
                   setStep("service")
                   setBookingData({
+                    serviceId: "",
                     service: "",
                     servicePrice: "",
                     date: undefined,
@@ -348,6 +415,8 @@ export default function BookingPage() {
                     email: "",
                     phone: "",
                   })
+                  setPhoneError("")
+                  setEmailError("")
                 }}
                 className="bg-accent text-accent-foreground hover:bg-accent/90"
               >
