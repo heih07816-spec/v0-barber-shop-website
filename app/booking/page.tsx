@@ -13,6 +13,7 @@ import { nb } from "date-fns/locale"
 type BookingStep = "service" | "datetime" | "info" | "confirmation"
 
 interface BookingData {
+  serviceId: string // Added serviceId to track selected service
   service: string
   servicePrice: string
   date: Date | undefined
@@ -25,6 +26,7 @@ interface BookingData {
 export default function BookingPage() {
   const [step, setStep] = useState<BookingStep>("service")
   const [bookingData, setBookingData] = useState<BookingData>({
+    serviceId: "", // Initialize serviceId
     service: "",
     servicePrice: "",
     date: undefined,
@@ -67,7 +69,7 @@ export default function BookingPage() {
   const handleServiceSelect = (serviceId: string) => {
     const service = services.find((s) => s.id === serviceId)
     if (service) {
-      setBookingData({ ...bookingData, service: service.name, servicePrice: service.price })
+      setBookingData({ ...bookingData, serviceId: service.id, service: service.name, servicePrice: service.price })
     }
   }
 
@@ -85,9 +87,13 @@ export default function BookingPage() {
     setStep("confirmation")
   }
 
-  const canProceedToDateTime = bookingData.service !== ""
+  const canProceedToDateTime = bookingData.serviceId !== "" // Check serviceId instead of service
   const canProceedToInfo = bookingData.date && bookingData.time !== ""
-  const canSubmit = bookingData.name && bookingData.email && bookingData.phone
+  const canSubmit =
+    bookingData.name &&
+    bookingData.email &&
+    bookingData.phone &&
+    /^[49]\d{7}$/.test(bookingData.phone.replace(/\s/g, ""))
 
   return (
     <main className="min-h-screen py-20">
@@ -144,23 +150,31 @@ export default function BookingPage() {
               <CardDescription>Hvilken tjeneste ønsker du å booke?</CardDescription>
             </CardHeader>
             <CardContent>
-              <RadioGroup value={bookingData.service} onValueChange={handleServiceSelect}>
+              <RadioGroup value={bookingData.serviceId} onValueChange={handleServiceSelect}>
                 <div className="space-y-3">
-                  {services.map((service) => (
-                    <div
-                      key={service.id}
-                      className="flex items-center space-x-3 rounded-lg border-2 p-4 transition-colors hover:border-accent"
-                    >
-                      <RadioGroupItem value={service.id} id={service.id} />
-                      <Label htmlFor={service.id} className="flex flex-1 cursor-pointer items-center justify-between">
-                        <div>
-                          <div className="font-semibold">{service.name}</div>
-                          <div className="text-sm text-muted-foreground">{service.duration}</div>
-                        </div>
-                        <div className="text-lg font-bold">{service.price}</div>
-                      </Label>
-                    </div>
-                  ))}
+                  {services.map((service) => {
+                    const isSelected = bookingData.serviceId === service.id
+                    return (
+                      <div
+                        key={service.id}
+                        className={`flex items-center space-x-3 rounded-lg border-2 p-4 transition-colors hover:border-accent ${
+                          isSelected ? "border-accent bg-accent/5" : ""
+                        }`}
+                      >
+                        <RadioGroupItem value={service.id} id={service.id} />
+                        <Label htmlFor={service.id} className="flex flex-1 cursor-pointer items-center justify-between">
+                          <div>
+                            <div className="font-semibold">{service.name}</div>
+                            <div className="text-sm text-muted-foreground">{service.duration}</div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-lg font-bold">{service.price}</div>
+                            {isSelected && <Check className="h-5 w-5 text-accent" />}
+                          </div>
+                        </Label>
+                      </div>
+                    )
+                  })}
                 </div>
               </RadioGroup>
               <div className="mt-6 flex justify-end">
@@ -259,14 +273,17 @@ export default function BookingPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="phone">Telefon</Label>
+                  <Label htmlFor="phone">Telefon (8 siffer, starter med 4 eller 9)</Label>
                   <Input
                     id="phone"
                     type="tel"
                     value={bookingData.phone}
                     onChange={(e) => setBookingData({ ...bookingData, phone: e.target.value })}
-                    placeholder="+47 123 45 678"
+                    placeholder="40123456"
                   />
+                  {bookingData.phone && !/^[49]\d{7}$/.test(bookingData.phone.replace(/\s/g, "")) && (
+                    <p className="mt-1 text-sm text-red-600">Telefonnummer må være 8 siffer og starte med 4 eller 9</p>
+                  )}
                 </div>
 
                 <div className="rounded-lg bg-muted p-4">
@@ -340,6 +357,7 @@ export default function BookingPage() {
                 onClick={() => {
                   setStep("service")
                   setBookingData({
+                    serviceId: "", // Reset serviceId
                     service: "",
                     servicePrice: "",
                     date: undefined,

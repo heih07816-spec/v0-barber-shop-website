@@ -49,8 +49,7 @@ export default function AdminPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
-    // Simple password check (in production, use proper authentication)
-    if (password === "admin123") {
+    if (password === "0999") {
       setIsAuthenticated(true)
     } else {
       alert("Feil passord")
@@ -98,7 +97,6 @@ export default function AdminPage() {
               <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
                 Logg Inn
               </Button>
-              <p className="text-center text-xs text-muted-foreground">Demo passord: admin123</p>
             </form>
           </CardContent>
         </Card>
