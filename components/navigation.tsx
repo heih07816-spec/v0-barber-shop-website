@@ -44,14 +44,6 @@ export function Navigation() {
           <Link href="/booking">
             <Button className="bg-accent text-accent-foreground hover:bg-accent/90">Book Nå</Button>
           </Link>
-          <Link href="/admin">
-            <Button
-              variant="outline"
-              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground bg-transparent"
-            >
-              Admin
-            </Button>
-          </Link>
         </div>
       </div>
     </nav>
