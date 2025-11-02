@@ -9,6 +9,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative flex min-h-[600px] items-center justify-center bg-gradient-to-br from-background via-background to-muted">
         <div className="container mx-auto px-4 py-20 text-center">
+          <div className="mb-4 text-sm font-bold text-accent">VERSION 2.0 - OPPDATERT</div>
           <h1 className="mb-6 text-5xl font-bold leading-tight text-balance md:text-6xl lg:text-7xl">
             Velkommen til <span className="text-accent">CutzByBigA</span>
           </h1>
