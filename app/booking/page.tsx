@@ -81,7 +81,7 @@ export default function BookingPage() {
   }
 
   const validatePhone = (phone: string): boolean => {
-    const phoneRegex = /^\d{8}$/
+    const phoneRegex = /^[49]\d{7}$/
     const cleanPhone = phone.replace(/\s+/g, "")
     return phoneRegex.test(cleanPhone)
   }
@@ -95,7 +95,7 @@ export default function BookingPage() {
     setBookingData({ ...bookingData, phone: value })
     const cleanPhone = value.replace(/\s+/g, "")
     if (value && !validatePhone(cleanPhone)) {
-      setPhoneError("Telefonnummer må være 8 siffer")
+      setPhoneError("Telefonnummer må være 8 siffer og starte med 4 eller 9")
     } else {
       setPhoneError("")
     }
@@ -333,7 +333,7 @@ export default function BookingPage() {
                       <span>{phoneError}</span>
                     </div>
                   )}
-                  <p className="mt-1 text-xs text-muted-foreground">Norsk telefonnummer med 8 siffer</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Må starte med 4 eller 9 og være 8 siffer</p>
                 </div>
 
                 <div className="rounded-lg bg-muted p-4">
